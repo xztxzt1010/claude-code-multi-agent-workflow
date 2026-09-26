@@ -1,0 +1,14 @@
+{
+  "name": "claude-code-multi-agent-workflow",
+  "version": "0.2.0",
+  "private": true,
+  "description": "Risk-based multi-agent review workflow for Claude Code",
+  "type": "module",
+  "scripts": {
+    "test": "node scripts/validate.mjs"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "license": "MIT"
+}

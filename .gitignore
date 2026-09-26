@@ -1,0 +1,11 @@
+.DS_Store
+Thumbs.db
+.env
+.env.*
+!.env.example
+node_modules/
+coverage/
+*.log
+.claude/settings.local.json
+evals/results/*.json
+!evals/results/.gitkeep
