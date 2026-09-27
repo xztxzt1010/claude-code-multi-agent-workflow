@@ -428,14 +428,13 @@
     "anySimulated": false,
     "evidenceClass": "supplemental-mimo-actor-only",
     "claudeCodeCompatible": false,
-    "note": "Not evidence of Claude Code runtime compatibility. Produced by mimo-desktop-actor harness (claudeCodeVersion=n/a). Claude Code 2.1.281 isolated-config drill blocked: no ANTHROPIC_API_KEY, no interactive OAuth in isolated CLAUDE_CONFIG_DIR. Per GATE-05R must not substitute for Claude Code evidence."
+    "note": "Mimo Desktop Actor harness only. Claude Code compatibility is NOT proven by this file."
   },
   "claudeCodeRuntimeSmoke": {
-    "status": "blocked",
-    "reason": "isolated CLAUDE_CONFIG_DIR has no credentials; interactive login unavailable; real ~/.claude must not be read",
+    "status": "completed-in-separate-evidence",
+    "pointer": "evals/results/2026-09-27-claude-code-runtime-smoke.json",
+    "note": "This file is NOT Claude Code evidence. Mimo actor drill is supplemental only. Claude Code runtime results live in the pointed file. Do not merge the two runtimes.",
     "claudeVersionObserved": "2.1.281",
-    "attemptedAt": "2026-09-27",
-    "objectIntegrityChecked": false,
     "allSpawnedInClaudeCode": false
   }
 }

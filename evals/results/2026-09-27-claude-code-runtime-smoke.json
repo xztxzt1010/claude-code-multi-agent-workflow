@@ -7,7 +7,6 @@
     "authMethod": "oauth_token",
     "apiProvider": "firstParty"
   },
-  "candidateSha": "a978df3663461dce032a4e381689d09987b5dab9",
   "branch": "mimo/v0.2.0-public-hardening",
   "isolation": {
     "clonedInto": "%TEMP%/claude-r3-*/repo (cleaned after run)",
@@ -98,5 +97,9 @@
     "Five of six role bodies are main-session simulated within Claude Code (skill allows this when spawn output delivery is limited); only spawn mechanism is fully real for two Task calls.",
     "--setting-sources project-only cannot authenticate in 2.1.281; used user,project with strict MCP and no session persistence.",
     "-p mode Task prompt truncation limited depth of spawned subagent role contracts."
-  ]
+  ],
+  "testedSourceSha": "a978df3663461dce032a4e381689d09987b5dab9",
+  "resultsFirstCommittedInSha": "af9de4a7b7e9989d68102b5120a45447671fde89",
+  "shaNote": "af9de4a is the commit that first stored this results file, NOT the tested source snapshot. testedSourceSha a978df3 is the code under test. Do not write this file into a commit that claims to be its own final SHA.",
+  "summary": "1 real spawn + 5 sequential simulated (Claude Code 2.1.281); not 6/6 spawn; not a quality-improvement claim."
 }

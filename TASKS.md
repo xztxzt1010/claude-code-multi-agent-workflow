@@ -14,12 +14,12 @@
 - [x] GATE-01：为 PowerShell/Bash 安装器增加所有权清单、全量预检与哈希保护
 - [x] GATE-02：覆盖六种破坏性边界并在 Windows/Ubuntu CI 通过
 - [x] GATE-03：README 先展示真实六角色实现，准确说明实验状态与安装边界
-- [x] GATE-04A：六角色只读回归通过，至少一个角色真实 spawn（6/6 spawn）
+- [x] GATE-04A：Claude Code 2.1.281 至少一个真实 spawn，另外五个角色为明确标记的 sequential simulated；Mimo 6/6 actor 仅为 supplemental
 - [x] GATE-04B：E01/E04/E08/E11/E14 三模式 smoke 可复现、已脱敏
 - [x] GATE-05A：候选分支与 PR 建立，CI 全绿
 - [x] GATE-05B：Windows/Linux 空克隆复验、敏感信息/许可证/链接检查通过
 - [x] GATE-05C：Mimo 提交候选报告并停止等待三项所有者批准
-- [ ] GATE-05R：补充修复（TargetRoot/清单安全已完成；Claude Code 六角色 smoke 阻塞于鉴权，保持 Private）
+- [x] GATE-05R：补充修复完成（强制 TargetRoot、清单路径安全预检、Claude Code runtime smoke 已完成并单独入库）
 - [ ] GATE-06：经单独批准后再处理合并、Public、Release 与安全配置
 
 ## v1.0.0 · 效果证据门槛
