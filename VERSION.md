@@ -1,5 +1,14 @@
 # 版本记录
 
+## 2026-09-27 · GATE-05R 补充修复（部分完成，Claude Code smoke 阻塞，保持 Private）
+
+- **R1 强制 TargetRoot（完成）**：PowerShell `-TargetRoot` 与 Bash `TARGET_ROOT` 均必填；缺失时在任何文件系统写入前非零退出；取消 Bash 默认写入 `~/.claude`。README/MAINTENANCE 已同步。
+- **R2 清单路径安全预检（完成）**：安装与卸载均完整校验 `manifest.tsv`——恰好 8 个允许相对路径、路径唯一；拒绝缺失/额外/重复/空白/格式错误/绝对路径/盘符/`.`/`..`/目标根逃逸；规范化绝对路径必须仍在 TargetRoot 内；校验通过前零写入、零删除。PS 与 Bash 语义一致。
+- **R2 回归（完成）**：新增缺 TargetRoot、`../` 逃逸（根外 sentinel 不变）、绝对路径、extra/missing/duplicate/malformed 清单、清单失败时 8 文件零删除。原 6 场景继续通过。PowerShell **37/37**、Bash **36/36**。
+- **R3 Claude Code 真实 six-role-drill（阻塞）**：已确认 `claude --version` = **2.1.281**。在独立 `CLAUDE_CONFIG_DIR` 安装候选组件后执行演练时鉴权失败（`Not logged in`）；环境无 `ANTHROPIC_API_KEY`，隔离配置无法交互 OAuth；按约束不读取真实 `~/.claude`。**按 GATE-05R 停止在 Private，不用 Mimo actor 结果冒充 Claude Code 兼容性证据。**
+- 原 Mimo actor 六角色结果已在 `evals/results/2026-09-27-smoke.json` 标记为 `supplemental-mimo-actor-only` / `claudeCodeCompatible: false`。
+- 提交：`e5ded64`（R1/R2）+ 本条文档。候选分支 `mimo/v0.2.0-public-hardening`，PR #1 保持 open、不合并、不改 Public、不建 Tag/Release、不改安全设置。
+
 ## 2026-09-27 · GATE-00～05 公开加固执行（完成，停止待批）
 
 - 基线：`main@970ffb6`，远端 `xztxzt1010/claude-code-multi-agent-workflow`（Private），账号 `xztxzt1010`。工作区 6 份任务书差异先提交到候选分支 `mimo/v0.2.0-public-hardening`（`5137224`）。
