@@ -17,9 +17,7 @@ assert() {
 }
 
 new_temp_root() {
-  local p
-  p="$(mktemp -d "${TMPDIR:-/tmp}/mimo-inst-XXXXXXXX")"
-  printf '%s' "$p"
+  mktemp -d "${TMPDIR:-/tmp}/mimo-inst-XXXXXXXX"
 }
 
 remove_temp_safe() {
@@ -35,6 +33,29 @@ remove_temp_safe() {
 
 run_install() { TARGET_ROOT="$1" bash "$install" >/dev/null 2>&1; echo $?; }
 run_uninstall() { TARGET_ROOT="$1" bash "$uninstall" >/dev/null 2>&1; echo $?; }
+run_install_no_root() { env -u TARGET_ROOT bash "$install" >/dev/null 2>&1; echo $?; }
+run_uninstall_no_root() { env -u TARGET_ROOT bash "$uninstall" >/dev/null 2>&1; echo $?; }
+
+write_manifest() {
+  local root="$1"; shift
+  mkdir -p "$root/.claude-multi-agent-workflow"
+  {
+    printf '# claude-code-multi-agent-workflow manifest v1\n'
+    printf '# project\trelpath\tsha256\n'
+    for line in "$@"; do printf '%s\n' "$line"; done
+  } > "$root/.claude-multi-agent-workflow/manifest.tsv"
+}
+
+base_rels=(
+  "agents/premise-overturner.md"
+  "agents/assumption-challenger.md"
+  "agents/test-designer.md"
+  "agents/metric-gate.md"
+  "agents/rollback-planner.md"
+  "agents/range-creep-guardian.md"
+  "skills/three-review/SKILL.md"
+  "skills/six-role-drill/SKILL.md"
+)
 
 echo "=== Bash isolation tests ==="
 
@@ -104,6 +125,78 @@ root="$(new_temp_root)"
 code="$(run_uninstall "$root")"
 assert "[[ $code -ne 0 ]]" "no-manifest uninstall refuses (got $code)"
 remove_temp_safe "$root"
+
+# Case 7: missing TARGET_ROOT -> refuse, zero writes
+root="$(new_temp_root)"
+code="$(run_install_no_root)"
+assert "[[ $code -ne 0 ]]" "case7 install without TARGET_ROOT fails (got $code)"
+code="$(run_uninstall_no_root)"
+assert "[[ $code -ne 0 ]]" "case7 uninstall without TARGET_ROOT fails (got $code)"
+remove_temp_safe "$root"
+
+# Case 8: ../ manifest escape -> refuse, sentinel unchanged
+root="$(new_temp_root)"
+run_install "$root" >/dev/null
+sentinel="$(mktemp "${TMPDIR:-/tmp}/mimo-sentinel-XXXXXXXX.txt")"
+printf 'SENTINEL-KEEP\n' > "$sentinel"
+sentinel_leaf="$(basename "$sentinel")"
+lines=()
+for rel in "${base_rels[@]:0:7}"; do
+  lines+=("claude-code-multi-agent-workflow	$rel	$(printf 'a%.0s' {1..64})")
+done
+lines+=("claude-code-multi-agent-workflow	../$sentinel_leaf	$(printf 'b%.0s' {1..64})")
+write_manifest "$root" "${lines[@]}"
+code="$(run_uninstall "$root")"
+assert "[[ $code -ne 0 ]]" "case8 ../ manifest uninstall fails (got $code)"
+assert "[[ \$(cat \"$sentinel\") == 'SENTINEL-KEEP' ]]" "case8 sentinel outside root unchanged"
+assert "[[ -f \"$root/agents/premise-overturner.md\" ]]" "case8 project files not deleted"
+rm -f "$sentinel"
+remove_temp_safe "$root"
+
+# Case 9: absolute path in manifest -> refuse
+root="$(new_temp_root)"
+run_install "$root" >/dev/null
+lines=()
+for rel in "${base_rels[@]}"; do
+  if [[ "$rel" == "skills/six-role-drill/SKILL.md" ]]; then
+    lines+=("claude-code-multi-agent-workflow	/etc/passwd	$(printf 'c%.0s' {1..64})")
+  else
+    lines+=("claude-code-multi-agent-workflow	$rel	$(printf 'c%.0s' {1..64})")
+  fi
+done
+write_manifest "$root" "${lines[@]}"
+code="$(run_uninstall "$root")"
+assert "[[ $code -ne 0 ]]" "case9 absolute-path manifest fails (got $code)"
+assert "[[ -f \"$root/agents/premise-overturner.md\" ]]" "case9 zero deletes"
+remove_temp_safe "$root"
+
+# Case 10: extra / missing / duplicate / malformed
+for kind in extra missing duplicate malformed; do
+  root="$(new_temp_root)"
+  run_install "$root" >/dev/null
+  lines=()
+  case "$kind" in
+    extra)
+      for rel in "${base_rels[@]}"; do lines+=("claude-code-multi-agent-workflow	$rel	$(printf 'd%.0s' {1..64})"); done
+      lines+=("claude-code-multi-agent-workflow	agents/evil.md	$(printf 'd%.0s' {1..64})")
+      ;;
+    missing)
+      for rel in "${base_rels[@]:0:7}"; do lines+=("claude-code-multi-agent-workflow	$rel	$(printf 'd%.0s' {1..64})"); done
+      ;;
+    duplicate)
+      for rel in "${base_rels[@]}"; do lines+=("claude-code-multi-agent-workflow	$rel	$(printf 'd%.0s' {1..64})"); done
+      lines+=("claude-code-multi-agent-workflow	agents/premise-overturner.md	$(printf 'd%.0s' {1..64})")
+      ;;
+    malformed)
+      for rel in "${base_rels[@]}"; do lines+=("claude-code-multi-agent-workflow	$rel"); done
+      ;;
+  esac
+  write_manifest "$root" "${lines[@]}"
+  code="$(run_uninstall "$root")"
+  assert "[[ $code -ne 0 ]]" "case10 $kind manifest fails (got $code)"
+  assert "[[ -f \"$root/agents/premise-overturner.md\" ]]" "case10 $kind zero deletes"
+  remove_temp_safe "$root"
+done
 
 echo "=== result: $pass_count passed, $fail_count failed ==="
 [[ $fail_count -gt 0 ]] && exit 1

@@ -4,67 +4,130 @@ param(
 )
 
 $ErrorActionPreference = 'Stop'
+
+# Fail before any filesystem write if TargetRoot is missing/empty.
+if ([string]::IsNullOrWhiteSpace($TargetRoot)) {
+    [Console]::Error.WriteLine('Install refused: TargetRoot is required (no default). Pass -TargetRoot explicitly.')
+    exit 1
+}
+
 $repoRoot = Split-Path -Parent $PSScriptRoot
 $projectId = 'claude-code-multi-agent-workflow'
-$manifestDir = Join-Path $TargetRoot '.claude-multi-agent-workflow'
+$manifestDirName = '.claude-multi-agent-workflow'
+$manifestDir = Join-Path $TargetRoot $manifestDirName
 $manifestPath = Join-Path $manifestDir 'manifest.tsv'
 
-# 8 install targets: 6 agents + 2 skill project files
-$targets = @(
-    @{ Src = 'agents/premise-overturner.md';        Rel = 'agents/premise-overturner.md' },
-    @{ Src = 'agents/assumption-challenger.md';     Rel = 'agents/assumption-challenger.md' },
-    @{ Src = 'agents/test-designer.md';             Rel = 'agents/test-designer.md' },
-    @{ Src = 'agents/metric-gate.md';               Rel = 'agents/metric-gate.md' },
-    @{ Src = 'agents/rollback-planner.md';          Rel = 'agents/rollback-planner.md' },
-    @{ Src = 'agents/range-creep-guardian.md';      Rel = 'agents/range-creep-guardian.md' },
-    @{ Src = 'skills/three-review/SKILL.md';        Rel = 'skills/three-review/SKILL.md' },
-    @{ Src = 'skills/six-role-drill/SKILL.md';      Rel = 'skills/six-role-drill/SKILL.md' }
+# Fixed allow-list of exactly 8 project-relative paths
+$allowedRels = @(
+    'agents/premise-overturner.md',
+    'agents/assumption-challenger.md',
+    'agents/test-designer.md',
+    'agents/metric-gate.md',
+    'agents/rollback-planner.md',
+    'agents/range-creep-guardian.md',
+    'skills/three-review/SKILL.md',
+    'skills/six-role-drill/SKILL.md'
 )
+$allowedSet = @{}
+foreach ($r in $allowedRels) { $allowedSet[$r] = $true }
 
 function Get-Sha256([string]$Path) {
     (Get-FileHash -LiteralPath $Path -Algorithm SHA256).Hash.ToLowerInvariant()
 }
 
-function Read-Manifest {
-    $map = @{}
+function Test-SafeRelPath([string]$Rel) {
+    if ([string]::IsNullOrWhiteSpace($Rel)) { return $false }
+    if ($Rel -match '^[A-Za-z]:') { return $false }          # drive letter
+    if ($Rel.StartsWith('/') -or $Rel.StartsWith('\')) { return $false }  # absolute
+    if ($Rel.Contains('\')) { return $false }                 # backslash
+    if ($Rel.Contains('//')) { return $false }
+    $segments = $Rel.Split('/')
+    foreach ($seg in $segments) {
+        if ($seg -eq '' -or $seg -eq '.' -or $seg -eq '..') { return $false }
+    }
+    return $true
+}
+
+function Resolve-UnderRoot([string]$Root, [string]$Rel) {
+    $rootFull = [IO.Path]::GetFullPath($Root)
+    $combined = [IO.Path]::GetFullPath((Join-Path $rootFull ($Rel -replace '/', [IO.Path]::DirectorySeparatorChar)))
+    $prefix = $rootFull.TrimEnd([IO.Path]::DirectorySeparatorChar) + [IO.Path]::DirectorySeparatorChar
+    if (-not $combined.StartsWith($prefix, [StringComparison]::OrdinalIgnoreCase)) {
+        return $null
+    }
+    return $combined
+}
+
+# Parse and fully validate manifest (if present). Returns hashtable or $null on missing; throws on invalid.
+function Read-ValidatedManifest {
     if (-not (Test-Path -LiteralPath $manifestPath -PathType Leaf)) { return $null }
+    $map = @{}
+    $seen = @{}
+    $lineNo = 0
     foreach ($line in Get-Content -LiteralPath $manifestPath) {
+        $lineNo++
         if ([string]::IsNullOrWhiteSpace($line)) { continue }
         if ($line.StartsWith('#')) { continue }
         $parts = $line -split "`t"
-        if ($parts.Count -lt 3) { continue }
-        if ($parts[0] -ne $projectId) { continue }
-        $map[$parts[1]] = $parts[2].ToLowerInvariant()
+        if ($parts.Count -ne 3) { throw "manifest line ${lineNo}: malformed (need 3 tab-separated fields)" }
+        $proj = $parts[0]
+        $rel = $parts[1]
+        $hash = $parts[2].ToLowerInvariant()
+        if ($proj -ne $projectId) { throw "manifest line ${lineNo}: unexpected project id '$proj'" }
+        if (-not (Test-SafeRelPath $rel)) { throw "manifest line ${lineNo}: unsafe or malformed path '$rel'" }
+        if (-not $allowedSet.ContainsKey($rel)) { throw "manifest line ${lineNo}: path not in allow-list '$rel'" }
+        if ($seen.ContainsKey($rel)) { throw "manifest line ${lineNo}: duplicate path '$rel'" }
+        if ($hash -notmatch '^[0-9a-f]{64}$') { throw "manifest line ${lineNo}: invalid sha256" }
+        if ($null -eq (Resolve-UnderRoot $TargetRoot $rel)) { throw "manifest line ${lineNo}: path escapes TargetRoot '$rel'" }
+        $seen[$rel] = $true
+        $map[$rel] = $hash
+    }
+    foreach ($rel in $allowedRels) {
+        if (-not $map.ContainsKey($rel)) { throw "manifest missing required path '$rel'" }
+    }
+    foreach ($rel in $map.Keys) {
+        if (-not $allowedSet.ContainsKey($rel)) { throw "manifest has extra path '$rel'" }
     }
     return $map
 }
 
-# ---- Preflight all 8 targets before any write ----
-$owned = Read-Manifest
+# ---- Validate existing manifest before any write ----
+$owned = $null
+try {
+    $owned = Read-ValidatedManifest
+} catch {
+    [Console]::Error.WriteLine("Install aborted before any write: invalid manifest — $($_.Exception.Message)")
+    exit 1
+}
+
+# ---- Preflight all 8 targets ----
 $plan = @()
 $failures = @()
-
-foreach ($t in $targets) {
-    $dest = Join-Path $TargetRoot ($t.Rel -replace '/', [IO.Path]::DirectorySeparatorChar)
-    $src = Join-Path $repoRoot ($t.Src -replace '/', [IO.Path]::DirectorySeparatorChar)
+foreach ($rel in $allowedRels) {
+    $src = Join-Path $repoRoot ($rel -replace '/', [IO.Path]::DirectorySeparatorChar)
+    $dest = Resolve-UnderRoot $TargetRoot $rel
+    if ($null -eq $dest) {
+        $failures += "path escapes TargetRoot: $rel"
+        continue
+    }
     if (-not (Test-Path -LiteralPath $src -PathType Leaf)) {
-        $failures += "missing source: $($t.Src)"
+        $failures += "missing source: $rel"
         continue
     }
     if (-not (Test-Path -LiteralPath $dest -PathType Leaf)) {
-        $plan += @{ Rel = $t.Rel; Src = $src; Dest = $dest; Mode = 'install' }
+        $plan += @{ Rel = $rel; Src = $src; Dest = $dest; Mode = 'install' }
         continue
     }
-    if ($null -eq $owned -or -not $owned.ContainsKey($t.Rel)) {
-        $failures += "conflict without ownership proof: $($t.Rel)"
+    if ($null -eq $owned) {
+        $failures += "conflict without ownership proof: $rel"
         continue
     }
     $cur = Get-Sha256 $dest
-    if ($cur -ne $owned[$t.Rel]) {
-        $failures += "installed file modified by user: $($t.Rel)"
+    if ($cur -ne $owned[$rel]) {
+        $failures += "installed file modified by user: $rel"
         continue
     }
-    $plan += @{ Rel = $t.Rel; Src = $src; Dest = $dest; Mode = 'upgrade' }
+    $plan += @{ Rel = $rel; Src = $src; Dest = $dest; Mode = 'upgrade' }
 }
 
 if ($failures.Count -gt 0) {
@@ -83,14 +146,14 @@ foreach ($p in $plan) {
 # Publish manifest only after all files are in place (atomic replace)
 New-Item -ItemType Directory -Force -Path $manifestDir | Out-Null
 $lines = @('# claude-code-multi-agent-workflow manifest v1', "# project`trelpath`tsha256")
-foreach ($t in $targets) {
-    $dest = Join-Path $TargetRoot ($t.Rel -replace '/', [IO.Path]::DirectorySeparatorChar)
+foreach ($rel in $allowedRels) {
+    $dest = Resolve-UnderRoot $TargetRoot $rel
     $hash = Get-Sha256 $dest
-    $lines += "$projectId`t$($t.Rel)`t$hash"
+    $lines += "$projectId`t$rel`t$hash"
 }
 $tmp = "$manifestPath.tmp"
 Set-Content -LiteralPath $tmp -Value $lines -Encoding ascii
 Move-Item -LiteralPath $tmp -Destination $manifestPath -Force
 
-Write-Output "Installed $($targets.Count) files into $TargetRoot (manifest published)"
+Write-Output "Installed $($allowedRels.Count) files into $TargetRoot (manifest published)"
 exit 0

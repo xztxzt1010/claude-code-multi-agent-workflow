@@ -30,8 +30,23 @@ function Remove-TempRootSafe($dir) {
 }
 
 function Invoke-Script($path, $target) {
+    if ($null -eq $target) {
+        # call without -TargetRoot (Mandatory should reject)
+        try {
+            & $path *> $null
+            return $LASTEXITCODE
+        } catch {
+            return 1
+        }
+    }
     & $path -TargetRoot $target *> $null
     return $LASTEXITCODE
+}
+
+function Write-Manifest($root, [string[]]$lines) {
+    $dir = Join-Path $root '.claude-multi-agent-workflow'
+    New-Item -ItemType Directory -Force -Path $dir | Out-Null
+    Set-Content -LiteralPath (Join-Path $dir 'manifest.tsv') -Value $lines -Encoding ascii
 }
 
 Write-Output "=== PowerShell isolation tests ==="
@@ -116,6 +131,76 @@ try {
     $code = Invoke-Script $uninstall $root
     Assert-True ($code -ne 0) "no-manifest uninstall refuses (got $code)"
 } finally { Remove-TempRootSafe $root }
+
+# Case 7: missing TargetRoot -> refuse, zero writes
+$root = New-TempRoot
+try {
+    $code = Invoke-Script $install $null
+    Assert-True ($code -ne 0) "case7 install without TargetRoot fails (got $code)"
+    Assert-True (-not (Test-Path (Join-Path $root 'agents'))) "case7 zero writes without TargetRoot"
+    $code = Invoke-Script $uninstall $null
+    Assert-True ($code -ne 0) "case7 uninstall without TargetRoot fails (got $code)"
+} finally { Remove-TempRootSafe $root }
+
+# Case 8: manifest with ../ escape -> uninstall refuses, sentinel unchanged
+$root = New-TempRoot
+try {
+    Invoke-Script $install $root | Out-Null
+    $sentinel = Join-Path ([IO.Path]::GetTempPath()) ("mimo-sentinel-" + [Guid]::NewGuid().ToString('N') + ".txt")
+    Set-Content $sentinel 'SENTINEL-KEEP'
+    # craft evil manifest
+    $evilRel = '../' + (Split-Path $sentinel -Leaf)
+    $lines = @('# claude-code-multi-agent-workflow manifest v1', "# project`trelpath`tsha256")
+    foreach ($r in @('agents/premise-overturner.md','agents/assumption-challenger.md','agents/test-designer.md','agents/metric-gate.md','agents/rollback-planner.md','agents/range-creep-guardian.md','skills/three-review/SKILL.md')) {
+        $lines += "claude-code-multi-agent-workflow`t$r`t$('a'*64)"
+    }
+    $lines += "claude-code-multi-agent-workflow`t$evilRel`t$('b'*64)"
+    Write-Manifest $root $lines
+    $code = Invoke-Script $uninstall $root
+    Assert-True ($code -ne 0) "case8 ../ manifest uninstall fails (got $code)"
+    Assert-True ((Get-Content $sentinel -Raw).Trim() -eq 'SENTINEL-KEEP') "case8 sentinel outside root unchanged"
+    Assert-True (Test-Path (Join-Path $root 'agents/premise-overturner.md')) "case8 project files not deleted"
+    Remove-Item $sentinel -Force
+} finally { Remove-TempRootSafe $root }
+
+# Case 9: absolute path in manifest -> refuse
+$root = New-TempRoot
+try {
+    Invoke-Script $install $root | Out-Null
+    $lines = @('# claude-code-multi-agent-workflow manifest v1', "# project`trelpath`tsha256")
+    foreach ($r in @('agents/premise-overturner.md','agents/assumption-challenger.md','agents/test-designer.md','agents/metric-gate.md','agents/rollback-planner.md','agents/range-creep-guardian.md','skills/three-review/SKILL.md','skills/six-role-drill/SKILL.md')) {
+        $rel = if ($r -eq 'skills/six-role-drill/SKILL.md') { '/etc/passwd' } else { $r }
+        $lines += "claude-code-multi-agent-workflow`t$rel`t$('c'*64)"
+    }
+    Write-Manifest $root $lines
+    $code = Invoke-Script $uninstall $root
+    Assert-True ($code -ne 0) "case9 absolute-path manifest fails (got $code)"
+    Assert-True (Test-Path (Join-Path $root 'agents/premise-overturner.md')) "case9 zero deletes"
+} finally { Remove-TempRootSafe $root }
+
+# Case 10: extra / missing / duplicate / malformed manifests all refuse
+foreach ($kind in @('extra','missing','duplicate','malformed')) {
+    $root = New-TempRoot
+    try {
+        Invoke-Script $install $root | Out-Null
+        $base = @('agents/premise-overturner.md','agents/assumption-challenger.md','agents/test-designer.md','agents/metric-gate.md','agents/rollback-planner.md','agents/range-creep-guardian.md','skills/three-review/SKILL.md','skills/six-role-drill/SKILL.md')
+        $rels = switch ($kind) {
+            'extra' { $base + @('agents/evil.md') }
+            'missing' { $base | Select-Object -First 7 }
+            'duplicate' { $base + @('agents/premise-overturner.md') }
+            'malformed' { $base }
+        }
+        $lines = @('# claude-code-multi-agent-workflow manifest v1', "# project`trelpath`tsha256")
+        foreach ($r in $rels) {
+            if ($kind -eq 'malformed') { $lines += "claude-code-multi-agent-workflow`t$r" }
+            else { $lines += "claude-code-multi-agent-workflow`t$r`t$('d'*64)" }
+        }
+        Write-Manifest $root $lines
+        $code = Invoke-Script $uninstall $root
+        Assert-True ($code -ne 0) "case10 $kind manifest fails (got $code)"
+        Assert-True (Test-Path (Join-Path $root 'agents/premise-overturner.md')) "case10 $kind zero deletes"
+    } finally { Remove-TempRootSafe $root }
+}
 
 Write-Output "=== result: $passCount passed, $failCount failed ==="
 if ($failCount -gt 0) { exit 1 }
