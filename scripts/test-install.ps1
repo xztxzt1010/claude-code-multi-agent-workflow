@@ -1,5 +1,5 @@
 # Isolation tests for install.ps1 / uninstall.ps1
-# NEVER touches real ~/.claude — every case uses a unique temp TargetRoot.
+# NEVER touches real ~/.claude - every case uses a unique temp TargetRoot.
 param()
 $ErrorActionPreference = 'Stop'
 $repoRoot = Split-Path -Parent $PSScriptRoot

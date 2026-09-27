@@ -89,7 +89,7 @@ try {
         if (-not $allowedSet.ContainsKey($rel)) { throw "manifest has extra path '$rel'" }
     }
 } catch {
-    [Console]::Error.WriteLine("Uninstall aborted with zero deletes: invalid manifest — $($_.Exception.Message)")
+    [Console]::Error.WriteLine('Uninstall aborted with zero deletes: invalid manifest: ' + $_.Exception.Message)
     exit 1
 }
 

@@ -96,7 +96,7 @@ $owned = $null
 try {
     $owned = Read-ValidatedManifest
 } catch {
-    [Console]::Error.WriteLine("Install aborted before any write: invalid manifest — $($_.Exception.Message)")
+    [Console]::Error.WriteLine('Install aborted before any write: invalid manifest: ' + $_.Exception.Message)
     exit 1
 }
 
