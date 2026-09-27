@@ -55,18 +55,27 @@ scripts/                 安装、卸载和静态校验脚本
 
 ## 快速开始
 
-要求：已安装 Claude Code。当前安装器安全加固正在按 [`MIMO.md`](./MIMO.md) 验收；在候选通过前，请只向显式临时目录安装，不要直接写入真实 `~/.claude`。
+要求：已安装 Claude Code。安装器使用带 SHA-256 的所有权清单（`.claude-multi-agent-workflow/manifest.tsv`）：
+
+- **冲突保护**：目标已存在但清单无所有权证明时，安装失败且零写入。
+- **修改保护**：已安装文件被改动后，卸载失败且零删除；需手动处理冲突后重试。
+- **幂等**：未改动的已安装文件可安全重装/升级。
+- **卸载**：只删除清单证明归属本项目且哈希未变的文件；无关文件保留，目录仅在为空时删除。
+
+所有脚本必须显式传入目标根目录。请先向临时目录安装验证，确认无误后再用于真实 `~/.claude`：
 
 Windows PowerShell：
 
 ```powershell
-./scripts/install.ps1
+./scripts/install.ps1 -TargetRoot "$env:TEMP\claude-workflow-test"
+./scripts/uninstall.ps1 -TargetRoot "$env:TEMP\claude-workflow-test"
 ```
 
 macOS / Linux：
 
 ```bash
-bash ./scripts/install.sh
+TARGET_ROOT="$(mktemp -d)" bash ./scripts/install.sh
+TARGET_ROOT="$TARGET_ROOT" bash ./scripts/uninstall.sh
 ```
 
 安装后在 Claude Code 中输入：
@@ -80,12 +89,13 @@ bash ./scripts/install.sh
 完成标准：自动测试覆盖有数据、空数据和非法筛选条件。
 ```
 
-候选安装器将使用带 SHA-256 的所有权清单：遇到无所有权的同名文件时安装应拒绝且零写入；已安装文件被用户修改后，卸载应拒绝且零删除。当前脚本完成该验收前不建议用于真实用户目录。
+若卸载因“文件已被修改”失败，请先比对差异；确认要丢弃改动时手动删除对应文件与清单，或恢复文件哈希后重试。不要手工删除他人文件。
 
-卸载入口：
+隔离安装回归（不触碰真实 `~/.claude`）：
 
-```powershell
-./scripts/uninstall.ps1
+```bash
+npm run test:install:ps   # Windows
+npm run test:install:sh   # Linux/macOS
 ```
 
 ## 验证
@@ -108,7 +118,7 @@ npm test
 
 ## 状态
 
-当前版本：`v0.2.0 Experimental`（私有候选整理中）。结构和静态规则已整理；安装安全、真实 spawn 与 5-case smoke 尚待 Mimo 验收，因此暂不公开，也不发布质量提升百分比。完整 20-case 三组重复评测是 `v1.0.0` 门槛。
+当前版本：`v0.2.0 Experimental`。已验证六角色/Skill 结构、所有权安装与零损害卸载（Windows/Linux 隔离测试）。真实 spawn 与 5-case smoke 为实验可运行证据；本仓库**不声称多 Agent 提升质量**。完整 20-case 三组重复评测是 `v1.0.0` 门槛。
 
 ## License
 

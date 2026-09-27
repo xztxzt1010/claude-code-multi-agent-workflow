@@ -1,3 +1,5 @@
+# CI — static validation + isolated install/uninstall tests on Windows and Ubuntu
+# Third-party actions pinned to full commit SHA (version in comment).
 name: CI
 
 on:
@@ -8,11 +10,22 @@ permissions:
   contents: read
 
 jobs:
-  validate:
-    runs-on: ubuntu-latest
+  test:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version: 20
-      - run: npm test
+      - name: Static validation
+        run: npm test
+      - name: Isolated install tests (Bash)
+        if: runner.os != 'Windows'
+        run: bash scripts/test-install.sh
+      - name: Isolated install tests (PowerShell)
+        if: runner.os == 'Windows'
+        run: powershell -NoProfile -ExecutionPolicy Bypass -File scripts/test-install.ps1
