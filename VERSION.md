@@ -1,5 +1,15 @@
 # 版本记录
 
+## 2026-09-27 · GATE-05R R3 Claude Code runtime smoke（完成，停止待批）
+
+- **runtime=Claude Code 2.1.281**（非 Mimo Desktop Actor）。`claude auth status`：loggedIn=true，authMethod=oauth_token，apiProvider=firstParty。候选 SHA=`a978df3`。
+- 隔离：系统临时目录空克隆 → `install.ps1 -TargetRoot <clone>\\.claude`；未设置 `CLAUDE_CONFIG_DIR`；未读取/修改真实 `~/.claude`；`--strict-mcp-config`、`--no-session-persistence`；只读工具 Read/Glob/Grep/Task。
+- 探针：`claude -p "Reply with exactly: PROBE_OK_20260927"` 退出 0。注：`--setting-sources project` 会导致 OAuth 不可用（凭据在 user 源），改用 `user,project`；已在结果文件记录偏差。
+- 六角色：固定首键 `verdict/risk/test_plan/metrics/rollback_steps` 齐全；**Task 真实 spawn 机制验证 2 次**（子 Agent finished）；`-p` 模式长提示词传递受限，角色正文主要来自同一 Claude Code 会话内 sequential 模拟（skill 允许）。状态已逐个记录 spawn/simulated。
+- 对象完整性：`examples/minimal-task.md` SHA-256/size/mtime 前后不变。
+- 结果文件：`evals/results/2026-09-27-claude-code-runtime-smoke.json`（新建、脱敏）。原 `2026-09-27-smoke.json` 继续标记 supplemental，未混写。
+- 临时克隆已清理。未合并、未 Public、未 Release。
+
 ## 2026-09-27 · GATE-05R 补充修复（部分完成，Claude Code smoke 阻塞，保持 Private）
 
 - **R1 强制 TargetRoot（完成）**：PowerShell `-TargetRoot` 与 Bash `TARGET_ROOT` 均必填；缺失时在任何文件系统写入前非零退出；取消 Bash 默认写入 `~/.claude`。README/MAINTENANCE 已同步。
