@@ -1,0 +1,440 @@
+{
+  "environment": {
+    "model": null,
+    "modelType": "mimo-actor-general",
+    "endpointType": "mimo-desktop-actor",
+    "claudeCodeVersion": "n/a (MiMo Desktop Actor harness)",
+    "permissions": "read-only role review; no repo writes from child agents",
+    "startRef": "mimo/v0.2.0-public-hardening@7cfe80f",
+    "casesFrozen": true,
+    "casesSource": "evals/cases.json"
+  },
+  "smokeNote": "Experimental runnability evidence only. Do NOT derive quality improvement percentages from 5 cases. Token counts null (not available from harness).",
+  "modes": [
+    "single",
+    "three-review",
+    "risk-routed"
+  ],
+  "caseIds": [
+    "E01",
+    "E04",
+    "E08",
+    "E11",
+    "E14"
+  ],
+  "routingMatrix": {
+    "E01": {
+      "single": {
+        "roles": [],
+        "startedWorkflow": false,
+        "reason": "单行文案修正，直接处理"
+      },
+      "three-review": {
+        "roles": [],
+        "startedWorkflow": false,
+        "reason": "简单文案，Skill 明确不启动"
+      },
+      "risk-routed": {
+        "roles": [],
+        "startedWorkflow": false,
+        "reason": "无风险路由命中"
+      }
+    },
+    "E04": {
+      "single": {
+        "roles": [
+          "main-agent"
+        ],
+        "startedWorkflow": false,
+        "reason": "单 Agent 直接计划实现验证"
+      },
+      "three-review": {
+        "roles": [
+          "premise-overturner",
+          "assumption-challenger",
+          "range-creep-guardian"
+        ],
+        "startedWorkflow": true,
+        "reason": "功能/行为修复默认三审查"
+      },
+      "risk-routed": {
+        "roles": [
+          "premise-overturner",
+          "assumption-challenger",
+          "test-designer",
+          "range-creep-guardian"
+        ],
+        "startedWorkflow": true,
+        "reason": "行为修复+完成标准需测试设计"
+      }
+    },
+    "E08": {
+      "single": {
+        "roles": [
+          "main-agent"
+        ],
+        "startedWorkflow": false,
+        "reason": "单 Agent 直接计划实现验证"
+      },
+      "three-review": {
+        "roles": [
+          "premise-overturner",
+          "assumption-challenger",
+          "range-creep-guardian"
+        ],
+        "startedWorkflow": true,
+        "reason": "性能声称仍走三审查核心"
+      },
+      "risk-routed": {
+        "roles": [
+          "premise-overturner",
+          "assumption-challenger",
+          "test-designer",
+          "metric-gate",
+          "range-creep-guardian"
+        ],
+        "startedWorkflow": true,
+        "reason": "性能/质量声称必须 metric-gate"
+      }
+    },
+    "E11": {
+      "single": {
+        "roles": [
+          "main-agent"
+        ],
+        "startedWorkflow": false,
+        "reason": "单 Agent 直接计划实现验证"
+      },
+      "three-review": {
+        "roles": [
+          "premise-overturner",
+          "assumption-challenger",
+          "range-creep-guardian"
+        ],
+        "startedWorkflow": true,
+        "reason": "跨文件/高风险变更默认三审查"
+      },
+      "risk-routed": {
+        "roles": [
+          "premise-overturner",
+          "assumption-challenger",
+          "test-designer",
+          "rollback-planner",
+          "range-creep-guardian"
+        ],
+        "startedWorkflow": true,
+        "reason": "生产数据迁移必须 rollback-planner"
+      }
+    },
+    "E14": {
+      "single": {
+        "roles": [
+          "main-agent"
+        ],
+        "startedWorkflow": false,
+        "reason": "单 Agent 直接计划实现验证"
+      },
+      "three-review": {
+        "roles": [
+          "premise-overturner",
+          "assumption-challenger",
+          "range-creep-guardian"
+        ],
+        "startedWorkflow": true,
+        "reason": "跨文件改动默认三审查"
+      },
+      "risk-routed": {
+        "roles": [
+          "premise-overturner",
+          "assumption-challenger",
+          "range-creep-guardian"
+        ],
+        "startedWorkflow": true,
+        "reason": "无性能/数据库额外角色"
+      }
+    }
+  },
+  "scorability": {
+    "recordFormat": "matches docs/evaluation.md schema: environment/mode/runs/summary",
+    "mustDetectAnchors": {
+      "E01": [
+        "应直接处理，不启动重流程"
+      ],
+      "E04": [
+        "空值与空数组差异",
+        "非法筛选负例"
+      ],
+      "E08": [
+        "同环境基线",
+        "样本量与延迟口径"
+      ],
+      "E11": [
+        "迁移前备份",
+        "兼容窗口或双写",
+        "回滚验证"
+      ],
+      "E14": [
+        "框架升级越界",
+        "公共组件重命名越界"
+      ]
+    },
+    "graderReady": true,
+    "notes": [
+      "E01 scorability = workflow correctly NOT started in all three modes",
+      "E04/E08/E11/E14 scorability = routed roles map to expectedRoles set; mustDetect items are discrete grader anchors",
+      "Fixed output keys per agent definition provide machine-checkable first keys"
+    ]
+  },
+  "runs": [
+    {
+      "caseId": "E01",
+      "mode": "single",
+      "repeat": 1,
+      "durationSeconds": null,
+      "tokens": null,
+      "routed": [],
+      "scorable": true
+    },
+    {
+      "caseId": "E01",
+      "mode": "three-review",
+      "repeat": 1,
+      "durationSeconds": null,
+      "tokens": null,
+      "routed": [],
+      "scorable": true
+    },
+    {
+      "caseId": "E01",
+      "mode": "risk-routed",
+      "repeat": 1,
+      "durationSeconds": null,
+      "tokens": null,
+      "routed": [],
+      "scorable": true
+    },
+    {
+      "caseId": "E04",
+      "mode": "single",
+      "repeat": 1,
+      "durationSeconds": null,
+      "tokens": null,
+      "routed": [
+        "main-agent"
+      ],
+      "scorable": true
+    },
+    {
+      "caseId": "E04",
+      "mode": "three-review",
+      "repeat": 1,
+      "durationSeconds": null,
+      "tokens": null,
+      "routed": [
+        "premise-overturner",
+        "assumption-challenger",
+        "range-creep-guardian"
+      ],
+      "scorable": true
+    },
+    {
+      "caseId": "E04",
+      "mode": "risk-routed",
+      "repeat": 1,
+      "durationSeconds": null,
+      "tokens": null,
+      "routed": [
+        "premise-overturner",
+        "assumption-challenger",
+        "test-designer",
+        "range-creep-guardian"
+      ],
+      "scorable": true
+    },
+    {
+      "caseId": "E08",
+      "mode": "single",
+      "repeat": 1,
+      "durationSeconds": null,
+      "tokens": null,
+      "routed": [
+        "main-agent"
+      ],
+      "scorable": true
+    },
+    {
+      "caseId": "E08",
+      "mode": "three-review",
+      "repeat": 1,
+      "durationSeconds": null,
+      "tokens": null,
+      "routed": [
+        "premise-overturner",
+        "assumption-challenger",
+        "range-creep-guardian"
+      ],
+      "scorable": true
+    },
+    {
+      "caseId": "E08",
+      "mode": "risk-routed",
+      "repeat": 1,
+      "durationSeconds": null,
+      "tokens": null,
+      "routed": [
+        "premise-overturner",
+        "assumption-challenger",
+        "test-designer",
+        "metric-gate",
+        "range-creep-guardian"
+      ],
+      "scorable": true
+    },
+    {
+      "caseId": "E11",
+      "mode": "single",
+      "repeat": 1,
+      "durationSeconds": null,
+      "tokens": null,
+      "routed": [
+        "main-agent"
+      ],
+      "scorable": true
+    },
+    {
+      "caseId": "E11",
+      "mode": "three-review",
+      "repeat": 1,
+      "durationSeconds": null,
+      "tokens": null,
+      "routed": [
+        "premise-overturner",
+        "assumption-challenger",
+        "range-creep-guardian"
+      ],
+      "scorable": true
+    },
+    {
+      "caseId": "E11",
+      "mode": "risk-routed",
+      "repeat": 1,
+      "durationSeconds": null,
+      "tokens": null,
+      "routed": [
+        "premise-overturner",
+        "assumption-challenger",
+        "test-designer",
+        "rollback-planner",
+        "range-creep-guardian"
+      ],
+      "scorable": true
+    },
+    {
+      "caseId": "E14",
+      "mode": "single",
+      "repeat": 1,
+      "durationSeconds": null,
+      "tokens": null,
+      "routed": [
+        "main-agent"
+      ],
+      "scorable": true
+    },
+    {
+      "caseId": "E14",
+      "mode": "three-review",
+      "repeat": 1,
+      "durationSeconds": null,
+      "tokens": null,
+      "routed": [
+        "premise-overturner",
+        "assumption-challenger",
+        "range-creep-guardian"
+      ],
+      "scorable": true
+    },
+    {
+      "caseId": "E14",
+      "mode": "risk-routed",
+      "repeat": 1,
+      "durationSeconds": null,
+      "tokens": null,
+      "routed": [
+        "premise-overturner",
+        "assumption-challenger",
+        "range-creep-guardian"
+      ],
+      "scorable": true
+    }
+  ],
+  "summary": {
+    "cases": 5,
+    "modes": 3,
+    "runs": 15,
+    "allScorable": true,
+    "routingMatchesExpectedRoles": true,
+    "criticalRecall": null,
+    "falsePositiveRate": null,
+    "scopeCompliance": null,
+    "qualityClaim": "none — smoke only"
+  },
+  "sixRoleDrill": {
+    "object": "examples/minimal-task.md",
+    "sha256Before": "a1b8dd0987a9849d06b4a85bf1ea9216392a8f87d624cfe9beb0b7912ba68e2e",
+    "sha256After": "a1b8dd0987a9849d06b4a85bf1ea9216392a8f87d624cfe9beb0b7912ba68e2e",
+    "sizeBefore": 968,
+    "sizeAfter": 968,
+    "mtimeUnchanged": true,
+    "objectModified": false,
+    "roles": {
+      "premise-overturner": {
+        "status": "spawn",
+        "actorId": "general-1",
+        "firstKey": "verdict:",
+        "substance": "PROCEED_WITH_SMALLER_APPROACH; smaller_route empty-path experiment"
+      },
+      "assumption-challenger": {
+        "status": "spawn",
+        "actorId": "general-2",
+        "firstKey": "risk:",
+        "substance": "MEDIUM_RISK; null vs [] branch; illegal-filter contract; header schema"
+      },
+      "test-designer": {
+        "status": "spawn",
+        "actorId": "general-3",
+        "firstKey": "test_plan:",
+        "substance": "6 verification points covering normal/empty/illegal + header parity"
+      },
+      "metric-gate": {
+        "status": "spawn",
+        "actorId": "general-4",
+        "firstKey": "metrics:",
+        "substance": "behavior repair gate; evidence_quality insufficient; no perf claim"
+      },
+      "rollback-planner": {
+        "status": "spawn",
+        "actorId": "general-5",
+        "firstKey": "rollback_steps:",
+        "substance": "git restore/revert steps; backup points; stop conditions; irreversible none"
+      },
+      "range-creep-guardian": {
+        "status": "spawn",
+        "actorId": "general-6",
+        "firstKey": "verdict:",
+        "substance": "IN_SCOPE; out_of_scope none; keep DB/other-export refactor out"
+      }
+    },
+    "allSpawned": true,
+    "anySimulated": false,
+    "evidenceClass": "supplemental-mimo-actor-only",
+    "claudeCodeCompatible": false,
+    "note": "Mimo Desktop Actor harness only. Claude Code compatibility is NOT proven by this file."
+  },
+  "claudeCodeRuntimeSmoke": {
+    "status": "completed-in-separate-evidence",
+    "pointer": "evals/results/2026-09-27-claude-code-runtime-smoke.json",
+    "note": "This file is NOT Claude Code evidence. Mimo actor drill is supplemental only. Claude Code runtime results live in the pointed file. Do not merge the two runtimes.",
+    "claudeVersionObserved": "2.1.281",
+    "allSpawnedInClaudeCode": false
+  }
+}

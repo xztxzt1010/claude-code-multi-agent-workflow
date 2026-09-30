@@ -22,7 +22,7 @@ const required = [
 const errors = [];
 
 async function text(path) {
-  return readFile(join(root, path), 'utf8');
+  return (await readFile(join(root, path), 'utf8')).replace(/\r\n?/g, '\n');
 }
 
 async function exists(path) {
@@ -86,7 +86,7 @@ const tokenPatterns = [
 for (const file of files) {
   const extension = extname(file).toLowerCase();
   if (!['.md', '.json', '.yml', '.yaml', '.js', '.mjs', '.ps1', '.sh', ''].includes(extension)) continue;
-  const source = await readFile(file, 'utf8');
+  const source = (await readFile(file, 'utf8')).replace(/\r\n?/g, '\n');
   for (const pattern of tokenPatterns) {
     pattern.lastIndex = 0;
     if (pattern.test(source)) errors.push(`possible secret in ${relative(root, file)} matching ${pattern.source}`);
@@ -94,7 +94,7 @@ for (const file of files) {
 }
 
 for (const file of files.filter((path) => extname(path).toLowerCase() === '.md')) {
-  const source = await readFile(file, 'utf8');
+  const source = (await readFile(file, 'utf8')).replace(/\r\n?/g, '\n');
   const links = [...source.matchAll(/\[[^\]]*\]\(([^)]+)\)/g)].map((match) => match[1]);
   for (const link of links) {
     if (/^(?:https?:|mailto:|#)/.test(link)) continue;

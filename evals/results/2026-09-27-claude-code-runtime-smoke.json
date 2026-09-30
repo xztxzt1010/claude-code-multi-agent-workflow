@@ -1,0 +1,105 @@
+{
+  "runtime": "Claude Code",
+  "notMimoDesktopActor": true,
+  "claudeVersion": "2.1.281",
+  "authStatus": {
+    "loggedIn": true,
+    "authMethod": "oauth_token",
+    "apiProvider": "firstParty"
+  },
+  "branch": "mimo/v0.2.0-public-hardening",
+  "isolation": {
+    "clonedInto": "%TEMP%/claude-r3-*/repo (cleaned after run)",
+    "projectLevelDotClaude": true,
+    "installTarget": "<temp-clone>/.claude via scripts/install.ps1",
+    "claudConfigDirUnset": true,
+    "realDotClaudeTouched": false,
+    "settingSourcesUsed": "user,project",
+    "settingSourcesDeviationNote": "--setting-sources project alone disables OAuth in 2.1.281 (auth lives in user source). Probe with project-only returned 'Not logged in'. Used user,project so OAuth works; user-level agents/skills/hooks not invoked; MCP locked by --strict-mcp-config; --no-session-persistence used.",
+    "strictMcpConfig": true,
+    "noSessionPersistence": true,
+    "allowedTools": "Read,Glob,Grep,Task",
+    "writeActions": "none"
+  },
+  "commands": [
+    "claude --version -> 2.1.281",
+    "claude auth status -> loggedIn:true authMethod:oauth_token",
+    "claude -p PROBE_OK_20260927 --max-turns 1 -> exit 0",
+    "scripts/install.ps1 -TargetRoot <clone>\\.claude -> exit 0",
+    "claude -p <six-role sequential drill> --max-turns 15 --allowedTools Read,Glob,Grep -> exit 0",
+    "claude -p <Task spawn probe x2> --allowedTools Read,Task -> exit 0"
+  ],
+  "objectIntegrity": {
+    "path": "examples/minimal-task.md",
+    "sha256Before": "a3b985add4b605ee530fbca2255e8e757f885fd1c9e282b7ba94ee6e4feffdcb",
+    "sha256After": "a3b985add4b605ee530fbca2255e8e757f885fd1c9e282b7ba94ee6e4feffdcb",
+    "sizeBefore": 1004,
+    "sizeAfter": 1004,
+    "mtimeBefore": "2026-09-27T11:45:53.2143425Z",
+    "mtimeAfter": "2026-09-27T11:45:53.2143425Z",
+    "unchanged": true,
+    "note": "Hash is of the Windows clone copy (autocrlf); before/after identical."
+  },
+  "sixRoles": {
+    "premise-overturner": {
+      "status": "spawn",
+      "firstKey": "verdict:",
+      "substance": "PROCEED_WITH_SMALLER_APPROACH; empty-path local fix + three tests",
+      "note": "Claude Code Task subagent spawn returned successfully twice (mechanism verified). -p mode truncated long Task prompts; structured role block below is from the same Claude Code session sequential pass."
+    },
+    "assumption-challenger": {
+      "status": "simulated",
+      "firstKey": "risk:",
+      "substance": "MEDIUM_RISK; [] vs null; shared-export blast radius; illegal-filter gap"
+    },
+    "test-designer": {
+      "status": "simulated",
+      "firstKey": "test_plan:",
+      "substance": "normal/empty CSV unit tests; manual illegal-filter cases; cannot_verify illegal-filter definition"
+    },
+    "metric-gate": {
+      "status": "simulated",
+      "firstKey": "metrics:",
+      "substance": "empty-export exception rate + done_when coverage; evidence_quality insufficient"
+    },
+    "rollback-planner": {
+      "status": "simulated",
+      "firstKey": "rollback_steps:",
+      "substance": "git restore steps; backup points; stop conditions; irreversible_risks none"
+    },
+    "range-creep-guardian": {
+      "status": "simulated",
+      "firstKey": "verdict:",
+      "substance": "IN_SCOPE; keep DB/other-export changes out"
+    }
+  },
+  "atLeastOneSpawn": true,
+  "spawnEvidence": [
+    "claude -p spawn#1: 'The subagent finished... 0 tool uses' (Task mechanism live)",
+    "claude -p spawn#2: 'The subagent finished. It scanned the repo and reported: ...'"
+  ],
+  "fixedKeysPresent": {
+    "verdict:": true,
+    "risk:": true,
+    "test_plan:": true,
+    "metrics:": true,
+    "rollback_steps:": true
+  },
+  "redaction": {
+    "hiddenReasoning": "not saved",
+    "oauthContent": "not saved",
+    "rawFullSession": "not saved",
+    "userConfig": "not read or copied"
+  },
+  "supplementalNotMixed": true,
+  "supplementalPointer": "evals/results/2026-09-27-smoke.json remains mimo-desktop-actor supplemental only",
+  "limitations": [
+    "Five of six role bodies are main-session simulated within Claude Code (skill allows this when spawn output delivery is limited); only spawn mechanism is fully real for two Task calls.",
+    "--setting-sources project-only cannot authenticate in 2.1.281; used user,project with strict MCP and no session persistence.",
+    "-p mode Task prompt truncation limited depth of spawned subagent role contracts."
+  ],
+  "testedSourceSha": "a978df3663461dce032a4e381689d09987b5dab9",
+  "resultsFirstCommittedInSha": "af9de4a7b7e9989d68102b5120a45447671fde89",
+  "shaNote": "af9de4a is the commit that first stored this results file, NOT the tested source snapshot. testedSourceSha a978df3 is the code under test. Do not write this file into a commit that claims to be its own final SHA.",
+  "summary": "1 real spawn + 5 sequential simulated (Claude Code 2.1.281); not 6/6 spawn; not a quality-improvement claim."
+}

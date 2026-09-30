@@ -1,25 +1,36 @@
 # 项目任务
 
-## v0.2.0 · 公开候选版
+## 已完成基线
 
-- [x] AGENT-001：清点并整理六个角色和两个 Skill
+- [x] AGENT-001：整理六个单一职责角色和两个 Skill
 - [x] AGENT-002：隔离公开配置与本机私有权限文件
-- [x] AGENT-003：建立 `agents / skills / examples / evals / docs / scripts` 结构
-- [x] AGENT-004：提供可指定目标目录的安装与卸载脚本
-- [x] AGENT-005：定义角色输出、交接信封、状态机和停止条件
-- [x] AGENT-006：冻结 20 个固定评测任务
-- [x] AGENT-008：定义最小 trace 和脱敏边界
-- [x] AGENT-009：添加 CI 与静态安全校验
-- [ ] MIMO-001：运行静态基线并记录结果
-- [ ] MIMO-002：在隔离目录验证安装/卸载
-- [ ] MIMO-003：执行六角色真实机制回归
-- [ ] MIMO-004：完成 single / three-review / risk-routed 三组对照
-- [ ] MIMO-005：回填脱敏评测报告
-- [ ] AGENT-010：发布 v1.0.0、Tag、仓库截图与结果报告
+- [x] AGENT-003：建立仓库结构、交接协议、状态机与停止条件
+- [x] AGENT-004：冻结 20 个固定评测任务与三组对照方法
+- [x] AGENT-005：增加零依赖静态校验与基础 CI
+
+## v0.2.0 Experimental · 公开前 P0
+
+- [x] GATE-00：核验 `main@970ffb6`、GitHub 身份、Private 状态并创建候选分支
+- [x] GATE-01：为 PowerShell/Bash 安装器增加所有权清单、全量预检与哈希保护
+- [x] GATE-02：覆盖六种破坏性边界并在 Windows/Ubuntu CI 通过
+- [x] GATE-03：README 先展示真实六角色实现，准确说明实验状态与安装边界
+- [x] GATE-04A：Claude Code 2.1.281 至少一个真实 spawn，另外五个角色为明确标记的 sequential simulated；Mimo 6/6 actor 仅为 supplemental
+- [x] GATE-04B：E01/E04/E08/E11/E14 三模式 smoke 可复现、已脱敏
+- [x] GATE-05A：候选分支与 PR 建立，CI 全绿
+- [x] GATE-05B：Windows/Linux 空克隆复验、敏感信息/许可证/链接检查通过
+- [x] GATE-05C：Mimo 提交候选报告并停止等待三项所有者批准
+- [x] GATE-05R：补充修复完成（强制 TargetRoot、清单路径安全预检、Claude Code runtime smoke 已完成并单独入库）
+- [ ] GATE-06：经单独批准后再处理合并、Public、Release 与安全配置
+
+## v1.0.0 · 效果证据门槛
+
+- [ ] EVAL-101：完成 20 case × 3 模式 × 每模式至少 3 次重复
+- [ ] EVAL-102：公开脱敏方法、样本量、失败 case、质量/成本指标与限制
+- [ ] EVAL-103：只有数据支持时才发布提升结论，并同时说明耗时与 Token 成本
+- [ ] EVAL-104：验证失败重试、预算上限和人工审批节点
 
 ## 后续增强
 
 - [ ] AGENT-101：根据真实结果调整动态路由规则
 - [ ] AGENT-102：为角色输出增加可机读 JSON Schema 与 grader
-- [ ] AGENT-103：验证失败重试、预算上限和人工审批节点
-- [ ] AGENT-104：做模型与 Prompt 版本对照实验
+- [ ] AGENT-103：做模型与 Prompt 版本对照实验

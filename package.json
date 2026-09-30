@@ -5,7 +5,10 @@
   "description": "Risk-based multi-agent review workflow for Claude Code",
   "type": "module",
   "scripts": {
-    "test": "node scripts/validate.mjs"
+    "test": "node scripts/validate.mjs",
+    "test:install:ps": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/test-install.ps1",
+    "test:install:sh": "bash scripts/test-install.sh",
+    "test:install": "node scripts/validate.mjs && powershell -NoProfile -ExecutionPolicy Bypass -File scripts/test-install.ps1"
   },
   "engines": {
     "node": ">=20"
